@@ -1,0 +1,40 @@
+D:.
+├───.air.toml
+├───.env
+├───.env.example
+├───.gitignore
+├───.golangci.yml
+├───go.mod
+├───go.sum
+├───main.go
+├───README.md
+├───vercel.json
+├───public
+|   └───brandicon.ico
+├───api
+|   └───index.go
+├───src
+│   ├───configs
+|   │   └───db.go
+│   ├───controllers
+|   │   └───userController.go
+│   ├───helpers
+|   │   ├───migration.go
+|   │   ├───params.go
+|   │   └───validation.go
+│   ├───middlewares
+|   │   ├───jwt.go
+|   │   └───xssClean.go
+│   ├───models
+|   │   └───user.go
+│   ├───routes
+|   │   ├───index.go
+|   │   ├───main.go
+|   │   └───user.go
+│   └───services
+|       ├───cloudinary.go
+|       ├───midtrans.go
+|       └───smtp.go
+└───tmp
+    ├───main.exe
+    └───ngrok.exe

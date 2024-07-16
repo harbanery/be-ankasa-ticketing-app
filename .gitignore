@@ -11,5 +11,4 @@ main
 .env.production
 *.exe
 *.log
-*.txt
 *.out
