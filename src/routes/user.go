@@ -7,6 +7,10 @@ import (
 )
 
 func userRoutes(app *fiber.App) {
-	app.Get("/users", controllers.GetUsers)
-	app.Post("/users", controllers.RegisterUser)
+	app.Post("/register", controllers.RegisterUser)
+	app.Get("/verify", controllers.VerificationAccount)
+	app.Get("/logout", controllers.LogoutUser)
+	app.Post("/requestResetPassword", controllers.RequestResetPassword)
+	app.Put("/resetPassword", controllers.ResetPassword)
+	app.Post("/refreshToken", controllers.CreateRefreshToken)
 }
