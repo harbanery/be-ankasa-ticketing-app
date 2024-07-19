@@ -8,33 +8,27 @@ import (
 
 type User struct {
 	gorm.Model
-	Email       string `json:"email"`
-	Password    string `json:"password"`
-	Username    string `json:"username"`
-	PhoneNumber string `json:"phone_number"`
-	City        string `json:"city"`
-	Image       string `json:"image"`
-	PostalCode  string `json:"postal_code"`
-	Address     string `json:"address"`
-	Role        string `json:"role"`
-	IsVerify    string `json:"is_verify"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
+	Role     string `json:"role" validate:"oneof=merchant customer"`
+	IsVerify string `json:"is_verify"`
 }
 
 type Register struct {
 	gorm.Model
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Username string `json:"username"`
-	Role     string `json:"role"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=8"`
+	Username string `json:"username" validate:"required,max=50"`
+	Role     string `json:"role" validate:"oneof=merchant customer"`
 }
 
-type Merchant struct {
-	gorm.Model
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Username string `json:"username"`
-	Image    string `json:"image"`
-}
+// type Merchant struct {
+// 	gorm.Model
+// 	Email    string `json:"email"`
+// 	Password string `json:"password"`
+// 	Username string `json:"username"`
+// 	Image    string `json:"image"`
+// }
 
 type UserVerification struct {
 	gorm.Model
@@ -83,11 +77,6 @@ func UpdateUserfromEmail(email string, updatedUser *User) error {
 
 func UpdateUserVerify(id int) error {
 	result := configs.DB.Model(&User{}).Where("id = ?", id).Update("is_verify", "true")
-	return result.Error
-}
-
-func UpdateUserVerificationfromID(user_id int) error {
-	result := configs.DB.Model(&UserVerification{}).Where("user_id = ?", user_id).Update("deleted_at", nil)
 	return result.Error
 }
 

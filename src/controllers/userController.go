@@ -99,6 +99,36 @@ func RegisterUser(c *fiber.Ctx) error {
 		})
 	}
 
+	// if newUser.Role == "merchant" {
+	// 	newSeller := models.Merchant{
+	// 		UserID: userID,
+	// 		Username:   user.Username,
+	// 	}
+
+	// 	if err := models.CreateSeller(&newSeller); err != nil {
+	// 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+	// 			"status":     "server error",
+	// 			"statusCode": 500,
+	// 			"message":    "Failed to create seller",
+	// 		})
+	// 	}
+	// }
+
+	if newUser.Role == "customer" {
+		newCustomer := models.Customer{
+			UserID:   userID,
+			Username: user.Username,
+		}
+
+		if err := models.CreateCustomer(&newCustomer); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"status":     "server error",
+				"statusCode": 500,
+				"message":    "Failed to create customer",
+			})
+		}
+	}
+
 	newUserVerification := models.UserVerification{
 		UserID: userID,
 		Token:  token,
@@ -189,6 +219,95 @@ func VerificationAccount(c *fiber.Ctx) error {
 	})
 }
 
+func LoginUser(c *fiber.Ctx) error {
+	var login models.User
+	if err := c.BodyParser(&login); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"status":     "bad request",
+			"statusCode": 400,
+			"message":    "Invalid request body",
+		})
+	}
+
+	user := middlewares.XSSMiddleware(&login).(*models.User)
+	if authErrors := helpers.StructValidation(user); len(authErrors) > 0 {
+		return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
+			"status":     "unprocessable entity",
+			"statusCode": 422,
+			"message":    "Validation failed",
+			"errors":     authErrors,
+		})
+	}
+
+	existUser := models.SelectUserfromEmail(user.Email)
+	if existUser.ID == 0 {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"status":     "not found",
+			"statusCode": 404,
+			"message":    "Email not found",
+		})
+	}
+
+	if existUser.Role != user.Role {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"status":     "forbidden",
+			"statusCode": 403,
+			"message":    "Invalid role",
+		})
+	}
+
+	if existUser.IsVerify == "false" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"status":     "not found",
+			"statusCode": 404,
+			"message":    "User not verify. Please check in your email.",
+		})
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(existUser.Password), []byte(login.Password)); err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"status":     "unauthorized",
+			"statusCode": 401,
+			"message":    "Invalid password",
+		})
+	}
+
+	payload := map[string]interface{}{
+		"id":    existUser.ID,
+		"email": existUser.Email,
+		"role":  existUser.Role,
+	}
+
+	token, err := helpers.GenerateToken(os.Getenv("SECRETKEY"), payload)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":     "server error",
+			"statusCode": 500,
+			"message":    "Failed to generate token",
+		})
+	}
+
+	refreshToken, err := helpers.GenerateRefreshToken(os.Getenv("SECRETKEY"), payload)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":     "server error",
+			"statusCode": 500,
+			"message":    "Could not generate refresh token",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"status":        "success",
+		"statusCode":    200,
+		"message":       "Login successfully",
+		"email":         existUser.Email,
+		"role":          existUser.Role,
+		"id":            existUser.ID,
+		"token":         token,
+		"refresh_token": refreshToken,
+	})
+}
+
 func CreateRefreshToken(c *fiber.Ctx) error {
 	var refreshData struct {
 		RefreshToken string `json:"refresh_token"`
@@ -266,7 +385,7 @@ func RequestResetPassword(c *fiber.Ctx) error {
 		})
 	}
 
-	url, _, err := helpers.GenerateURL(int(existUser.ID), "resetPassword")
+	url, token, err := helpers.GenerateURL(int(existUser.ID), "resetPassword")
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status":     "server error",
@@ -283,20 +402,12 @@ func RequestResetPassword(c *fiber.Ctx) error {
 		})
 	}
 
-	// newUserVerification := models.UserVerification{
-	// 	UserID: existUser.ID,
-	// 	Token:  token,
-	// }
+	newUserVerification := models.UserVerification{
+		UserID: existUser.ID,
+		Token:  token,
+	}
 
-	// if err := models.CreateUserVerification(&newUserVerification); err != nil {
-	// 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-	// 		"status":     "server error",
-	// 		"statusCode": 500,
-	// 		"message":    "Failed to create user verification",
-	// 	})
-	// }
-
-	if err := models.UpdateUserVerificationfromID(int(existUser.ID)); err != nil {
+	if err := models.CreateUserVerification(&newUserVerification); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status":     "server error",
 			"statusCode": 500,
@@ -347,6 +458,7 @@ func ResetPassword(c *fiber.Ctx) error {
 		})
 	}
 	updatedUser.Email = existUser.Email
+	updatedUser.Role = existUser.Role
 
 	user := middlewares.XSSMiddleware(&updatedUser).(*models.User)
 	if authErrors := helpers.PasswordValidation(user.Password, helpers.StructValidation(user)); len(authErrors) > 0 {
