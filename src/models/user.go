@@ -92,6 +92,11 @@ func UpdateUserVerify(id int) error {
 	return result.Error
 }
 
+func UpdateUserSingle(id int, name, value string) error {
+	result := configs.DB.Model(&User{}).Where("id = ?", id).Update(name, value)
+	return result.Error
+}
+
 func DeleteUserVerification(id int, token string) error {
 	result := configs.DB.Where("id = ? AND token = ?", id, token).Delete(&UserVerification{})
 	return result.Error

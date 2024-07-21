@@ -274,6 +274,26 @@ func LoginUserwithAuthProvider(c *fiber.Ctx) error {
 			}
 		}
 	} else {
+		if existUser.IsVerify != "true" {
+			if err := models.UpdateUserSingle(int(existUser.ID), "is_verify", "true"); err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"status":     "server error",
+					"statusCode": 500,
+					"message":    "Failed to update uid",
+				})
+			}
+		}
+
+		if existUser.GoogleUID == "" && user.GoogleUID != "" && existUser.GoogleUID != user.GoogleUID {
+			if err := models.UpdateUserSingle(int(existUser.ID), "google_uid", user.GoogleUID); err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"status":     "server error",
+					"statusCode": 500,
+					"message":    "Failed to update uid",
+				})
+			}
+		}
+
 		if existUser.Role == "customer" {
 			customer := models.SelectCustomerfromUserID(int(existUser.ID))
 
