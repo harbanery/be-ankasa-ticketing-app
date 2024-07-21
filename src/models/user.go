@@ -8,10 +8,11 @@ import (
 
 type User struct {
 	gorm.Model
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
-	Role     string `json:"role" validate:"oneof=merchant customer"`
-	IsVerify string `json:"is_verify"`
+	Email     string `json:"email" validate:"required,email"`
+	Password  string `json:"password" validate:"required"`
+	Role      string `json:"role" validate:"oneof=merchant customer"`
+	IsVerify  string `json:"is_verify"`
+	GoogleUID string `json:"google_uid"`
 }
 
 type Register struct {
@@ -29,6 +30,17 @@ type Register struct {
 // 	Username string `json:"username"`
 // 	Image    string `json:"image"`
 // }
+
+type AuthProvider struct {
+	gorm.Model
+	Username    string `json:"username" validate:"required,max=50"`
+	Email       string `json:"email" validate:"required,email"`
+	PhoneNumber string `json:"phone_number"`
+	Image       string `json:"image"`
+	Role        string `json:"role" validate:"oneof=merchant customer"`
+	GoogleUID   string `json:"google_uid"`
+	// IsVerify    string `json:"is_verify"`
+}
 
 type UserVerification struct {
 	gorm.Model

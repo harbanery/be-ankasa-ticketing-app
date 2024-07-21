@@ -219,6 +219,122 @@ func VerificationAccount(c *fiber.Ctx) error {
 	})
 }
 
+func LoginUserwithAuthProvider(c *fiber.Ctx) error {
+	var login models.AuthProvider
+	if err := c.BodyParser(&login); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"status":     "bad request",
+			"statusCode": 400,
+			"message":    "Invalid request body",
+		})
+	}
+
+	user := middlewares.XSSMiddleware(&login).(*models.AuthProvider)
+	if authErrors := helpers.StructValidation(user); len(authErrors) > 0 {
+		return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
+			"status":     "unprocessable entity",
+			"statusCode": 422,
+			"message":    "Validation failed",
+			"errors":     authErrors,
+		})
+	}
+
+	existUser := models.SelectUserfromEmail(user.Email)
+	if existUser.ID == 0 {
+		newUser := models.User{
+			Email:     user.Email,
+			Role:      user.Role,
+			IsVerify:  "true",
+			GoogleUID: user.GoogleUID,
+		}
+
+		userID, err := models.CreateUser(&newUser)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"status":     "server error",
+				"statusCode": 500,
+				"message":    "Failed to create user",
+			})
+		}
+
+		if newUser.Role == "customer" {
+			newCustomer := models.Customer{
+				UserID:      userID,
+				Username:    user.Username,
+				PhoneNumber: user.PhoneNumber,
+				Image:       user.Image,
+			}
+
+			if err := models.CreateCustomer(&newCustomer); err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"status":     "server error",
+					"statusCode": 500,
+					"message":    "Failed to create customer",
+				})
+			}
+		}
+	} else {
+		if existUser.Role == "customer" {
+			customer := models.SelectCustomerfromUserID(int(existUser.ID))
+
+			if customer.PhoneNumber == "" && user.PhoneNumber != "" {
+				if err := models.UpdateCustomerSingle(int(customer.ID), "phone_number", user.PhoneNumber); err != nil {
+					return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+						"status":     "server error",
+						"statusCode": 500,
+						"message":    "Failed to update phone number",
+					})
+				}
+			}
+
+			if customer.Image == "" && user.Image != "" {
+				if err := models.UpdateCustomerSingle(int(customer.ID), "image", user.Image); err != nil {
+					return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+						"status":     "server error",
+						"statusCode": 500,
+						"message":    "Failed to update phone number",
+					})
+				}
+			}
+		}
+	}
+
+	payload := map[string]interface{}{
+		"id":    existUser.ID,
+		"email": existUser.Email,
+		"role":  existUser.Role,
+	}
+
+	token, err := helpers.GenerateToken(os.Getenv("SECRETKEY"), payload)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":     "server error",
+			"statusCode": 500,
+			"message":    "Failed to generate token",
+		})
+	}
+
+	refreshToken, err := helpers.GenerateRefreshToken(os.Getenv("SECRETKEY"), payload)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":     "server error",
+			"statusCode": 500,
+			"message":    "Could not generate refresh token",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"status":        "success",
+		"statusCode":    200,
+		"message":       "Login successfully",
+		"email":         existUser.Email,
+		"role":          existUser.Role,
+		"id":            existUser.ID,
+		"token":         token,
+		"refresh_token": refreshToken,
+	})
+}
+
 func LoginUser(c *fiber.Ctx) error {
 	var login models.User
 	if err := c.BodyParser(&login); err != nil {

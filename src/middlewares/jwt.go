@@ -57,3 +57,24 @@ func JWTMiddleware() fiber.Handler {
 		return c.Next()
 	}
 }
+
+func JWTAuthorize(c *fiber.Ctx, requiredRole string) (float64, error) {
+	user, ok := c.Locals("user").(jwt.MapClaims)
+	if !ok {
+		return 0, fiber.NewError(fiber.StatusUnauthorized, "Unauthorized")
+	}
+
+	if requiredRole != "" {
+		role, ok := user["role"].(string)
+		if !ok || role != requiredRole {
+			return 0, fiber.NewError(fiber.StatusForbidden, "Incorrect role")
+		}
+	}
+
+	id, ok := user["id"].(float64)
+	if !ok {
+		return 0, fiber.NewError(fiber.StatusBadRequest, "Invalid ID format")
+	}
+
+	return id, nil
+}
