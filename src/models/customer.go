@@ -17,6 +17,13 @@ type Customer struct {
 	Address     string `json:"address" validate:"required"`
 	PostalCode  string `json:"postal_code" validate:"required,numeric,max=5"`
 }
+//buat ngambil wallet user
+// type APIWallet struct {
+// 	gorm.Model
+// 	Saldo  float64 `json:"saldo" validate:"min=0"`
+// 	UserId uint    `json:"user_id"`
+// 	User   User    `gorm:"foreignKey:UserID"`
+// }
 
 func CreateCustomer(customer *Customer) error {
 	result := configs.DB.Create(&customer)
