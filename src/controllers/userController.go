@@ -82,16 +82,20 @@ func RegisterUser(c *fiber.Ctx) error {
 		})
 	}
 
-	url, token, err := helpers.GenerateURL(int(userID), "verify")
+	payload := map[string]interface{}{
+		"email": newUser.Email,
+	}
+
+	token, err := helpers.GenerateToken(os.Getenv("SECRETKEY"), payload)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status":     "server error",
 			"statusCode": 500,
-			"message":    "Failed to generate URL",
+			"message":    "Failed to generate token",
 		})
 	}
 
-	if err := services.SendEmail(newUser.Email, "Verify Email", url); err != nil {
+	if err := services.SendEmailVerification(newUser.Email, user.Username, token, int(userID)); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status":     "server error",
 			"statusCode": 500,
@@ -157,7 +161,16 @@ func VerificationAccount(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 			"status":     "forbidden",
 			"statusCode": 403,
-			"error":      "Invalid url verification",
+			"error":      "Invalid url",
+		})
+	}
+
+	email, err := helpers.VerifyEmailToken(os.Getenv("SECRETKEY"), queryToken)
+	if err != nil {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"status":     "forbidden",
+			"statusCode": 403,
+			"error":      "Invalid token",
 		})
 	}
 
@@ -176,6 +189,14 @@ func VerificationAccount(c *fiber.Ctx) error {
 			"status":     "not found",
 			"statusCode": 404,
 			"message":    "Email not found",
+		})
+	}
+
+	if existUser.Email != email {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"status":     "forbidden",
+			"statusCode": 403,
+			"message":    "Email not verified",
 		})
 	}
 
@@ -521,16 +542,33 @@ func RequestResetPassword(c *fiber.Ctx) error {
 		})
 	}
 
-	url, token, err := helpers.GenerateURL(int(existUser.ID), "resetPassword")
+	name := user.Email
+	if existUser.Role == "customer" {
+		existCostumer := models.SelectCustomerfromUserID(int(existUser.ID))
+		if existCostumer.ID == 0 {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"status":     "not found",
+				"statusCode": 404,
+				"message":    "Name not found",
+			})
+		}
+		name = existCostumer.Username
+	}
+
+	payload := map[string]interface{}{
+		"email": user.Email,
+	}
+
+	token, err := helpers.GenerateToken(os.Getenv("SECRETKEY"), payload)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status":     "server error",
 			"statusCode": 500,
-			"message":    "Failed to generate URL",
+			"message":    "Failed to generate token",
 		})
 	}
 
-	if err := services.SendEmail(user.Email, "Reset Password", url); err != nil {
+	if err := services.SendRequestResetPassword(user.Email, name, token, int(existUser.ID)); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status":     "server error",
 			"statusCode": 500,
@@ -552,10 +590,9 @@ func RequestResetPassword(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusAccepted).JSON(fiber.Map{
-		"status":      "accepted",
-		"statusCode":  202,
-		"message":     "Password reset email sent. Please check in your email to reset your password.",
-		"expectedUrl": url,
+		"status":     "accepted",
+		"statusCode": 202,
+		"message":    "Password reset email sent. Please check in your email to reset your password.",
 	})
 }
 
@@ -565,7 +602,16 @@ func ResetPassword(c *fiber.Ctx) error {
 
 	if queryUserId == "" || queryToken == "" {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-			"error": "Invalid url verification",
+			"error": "Invalid url",
+		})
+	}
+
+	email, err := helpers.VerifyEmailToken(os.Getenv("SECRETKEY"), queryToken)
+	if err != nil {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"status":     "forbidden",
+			"statusCode": 403,
+			"error":      "Invalid token",
 		})
 	}
 
@@ -582,6 +628,14 @@ func ResetPassword(c *fiber.Ctx) error {
 			"status":     "not found",
 			"statusCode": 404,
 			"message":    "Email not found",
+		})
+	}
+
+	if existUser.Email != email {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"status":     "forbidden",
+			"statusCode": 403,
+			"message":    "Email not verified",
 		})
 	}
 
