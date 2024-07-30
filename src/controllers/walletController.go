@@ -2,6 +2,7 @@ package controllers
 
 import (
 	// "ankasa-be/src/middlewares"
+	"ankasa-be/src/middlewares"
 	"ankasa-be/src/models"
 	"strconv"
 
@@ -21,20 +22,47 @@ func GetAllWallet(c *fiber.Ctx) error {
 
 }
 
-// func CreateWallet(c *fiber.Ctx) error {
-// 	var input models.Wallet
-// 	if err := c.BodyParser(&input); err != nil {
-// 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-// 			"status":     "bad request",
-// 			"statusCode": 400,
-// 			"message":    "Invalid request body",
-// 		})
-// 	}
-// 	wallet := middlewares.XSSMiddleware(&input).(*models.Wallet)
-// newWalet := models.Wallet{
-// 	CustomerID: ,
-// 	}
-// }
+func CreateWallet(c *fiber.Ctx) error {
+	user_id, err := middlewares.JWTAuthorize(c, "customer")
+	if err != nil {
+		if fiberErr, ok := err.(*fiber.Error); ok {
+			return c.Status(fiberErr.Code).JSON(fiber.Map{
+				"status":     fiberErr.Message,
+				"statusCode": fiberErr.Code,
+				"message":    fiberErr.Message,
+			})
+		}
+
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":     "Internal Server Error",
+			"statusCode": fiber.StatusInternalServerError,
+			"message":    err.Error(),
+		})
+	}
+
+	var input models.Wallet
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"status":     "bad request",
+			"statusCode": 400,
+			"message":    "Invalid request body",
+		})
+	}
+	newWalet := models.Wallet{
+		CustomerID: uint(user_id),
+		Saldo:      0,
+	}
+	if err := models.CreateWallet(&newWalet); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err,
+		})
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message":    "Successfully created wallet",
+		"statusCode": c.Status(fiber.StatusOK),
+	})
+
+}
 
 func UpdateWallet(c *fiber.Ctx) error {
 	var newWalet models.Wallet

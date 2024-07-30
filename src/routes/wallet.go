@@ -9,6 +9,7 @@ import (
 func walletRoutes(app *fiber.App) {
 	wallet := app.Group("/wallets")
 	wallet.Get("/", controllers.GetAllWallet)
+	wallet.Post("/", controllers.CreateWallet)
 	wallet.Put("/update/:id", controllers.UpdateWallet)
 	wallet.Delete("/delete/:id", controllers.DeleteWallet)
 }
