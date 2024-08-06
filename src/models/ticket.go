@@ -8,21 +8,22 @@ import (
 
 type Ticket struct {
 	gorm.Model
-	Stock          uint   `json:"stock" validate:"required"`
-	Price          uint   `json:"price" validate:"required"`
-	Class          string `json:"class" validate:"required"`
-	Gate           string `json:"gate" validate:"required"`
-	IsRefund       bool   `json:"is_refund"`
-	IsReschedule   bool   `json:"is_reschedule"`
-	IsLuggage      bool   `json:"is_luggage"`
-	IsInflightMeal bool   `json:"is_inflight_meal"`
-	IsWifi         bool   `json:"is_wifi"`
+	Stock          uint       `json:"stock" validate:"required"`
+	Price          uint       `json:"price" validate:"required"`
+	Class          string     `json:"class" validate:"required"`
+	Gate           string     `json:"gate" validate:"required"`
+	IsRefund       bool       `json:"is_refund"`
+	IsReschedule   bool       `json:"is_reschedule"`
+	IsLuggage      bool       `json:"is_luggage"`
+	IsInflightMeal bool       `json:"is_inflight_meal"`
+	IsWifi         bool       `json:"is_wifi"`
+	Categories     []Category `json:"categories"`
 }
 
 func SelectAllTickets() ([]Ticket, error) {
 	var tickets []Ticket
 
-	err := configs.DB.Find(&tickets).Error
+	err := configs.DB.Model(&Ticket{}).Preload("Categories").Find(&tickets).Error
 
 	if err != nil {
 		return nil, err
@@ -33,7 +34,7 @@ func SelectAllTickets() ([]Ticket, error) {
 
 func SelectTicketById(id int) (Ticket, error) {
 	var ticket Ticket
-	if err := configs.DB.First(&ticket, "id = ?", id).Error; err != nil {
+	if err := configs.DB.Model(&Ticket{}).Preload("Categories").First(&ticket, "id = ?", id).Error; err != nil {
 		return Ticket{}, err
 	}
 

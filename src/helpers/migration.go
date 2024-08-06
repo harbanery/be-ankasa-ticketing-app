@@ -14,6 +14,7 @@ func Migration() {
 		&models.Ticket{},
 		&models.Country{},
 		&models.City{},
+		&models.Category{},
 	)
 
 	if err != nil {
