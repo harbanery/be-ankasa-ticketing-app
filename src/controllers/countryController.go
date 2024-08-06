@@ -8,8 +8,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func GetAllTickets(c *fiber.Ctx) error {
-	tickets, err := models.SelectAllTickets()
+func GetAllCountries(c *fiber.Ctx) error {
+	countries, err := models.SelectAllCountries()
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -22,11 +22,11 @@ func GetAllTickets(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"status":     "success",
 		"statusCode": fiber.StatusOK,
-		"data":       tickets,
+		"data":       countries,
 	})
 }
 
-func GetTicketById(c *fiber.Ctx) error {
+func GetCountryById(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -36,25 +36,26 @@ func GetTicketById(c *fiber.Ctx) error {
 		})
 	}
 
-	ticket, err := models.SelectTicketById(id)
+	country, err := models.SelectCountryById(id)
 	if err != nil {
+		fmt.Printf("Error while retrieving country by id: %v", err)
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"status":     "not found",
 			"statusCode": 404,
-			"message":    "Ticket is not found",
+			"message":    "Country is not found",
 		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"status":     "success",
 		"statusCode": fiber.StatusOK,
-		"data":       ticket,
+		"data":       country,
 	})
 }
 
-func CreateTicket(c *fiber.Ctx) error {
-	var ticket models.Ticket
-	if err := c.BodyParser(&ticket); err != nil {
+func CreateCountry(c *fiber.Ctx) error {
+	var country models.Country
+	if err := c.BodyParser(&country); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"status":     "bad request",
 			"statusCode": 400,
@@ -62,7 +63,7 @@ func CreateTicket(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := models.CreateTicket(&ticket); err != nil {
+	if err := models.CreateCountry(&country); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status":     "internal server error",
 			"statusCode": fiber.StatusInternalServerError,
@@ -73,12 +74,12 @@ func CreateTicket(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"status":     "created",
 		"statusCode": fiber.StatusCreated,
-		"message":    "Ticket has been created successfully",
-		"data":       fiber.Map{"id": ticket.ID},
+		"message":    "Country has been created successfully",
+		"data":       fiber.Map{"id": country.ID},
 	})
 }
 
-func UpdateTicket(c *fiber.Ctx) error {
+func UpdateCountry(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -88,34 +89,33 @@ func UpdateTicket(c *fiber.Ctx) error {
 		})
 	}
 
-	var updatedTicket models.Ticket
+	var updatedCountry models.Country
 
-	if err := c.BodyParser(&updatedTicket); err != nil {
+	if err := c.BodyParser(&updatedCountry); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"status":     "bad request",
 			"statusCode": 400,
 			"message":    "Invalid request body",
-			"data":       updatedTicket,
 		})
 	}
 
-	rowsAffected, err := models.UpdateTicketById(id, updatedTicket)
+	rowsAffected, err := models.UpdateCountryById(id, updatedCountry)
 	if err != nil || rowsAffected == 0 {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"status":     "not found",
 			"statusCode": 404,
-			"message":    fmt.Sprintf("Ticket with ID %d is not found", id),
+			"message":    fmt.Sprintf("Country with ID %d is not found", id),
 		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"status":     "success",
 		"statusCode": 200,
-		"message":    fmt.Sprintf("Ticket with ID %d has been updated successfully", id),
+		"message":    fmt.Sprintf("Country with ID %d has been updated successfully", id),
 	})
 }
 
-func DeleteTicket(c *fiber.Ctx) error {
+func DeleteCountry(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -124,18 +124,19 @@ func DeleteTicket(c *fiber.Ctx) error {
 			"message":    "Invalid ID format",
 		})
 	}
-	rowsAffected, err := models.DeleteTicketById(id)
+
+	rowsAffected, err := models.DeleteCountryById(id)
 	if err != nil || rowsAffected == 0 {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"status":     "not found",
 			"statusCode": 404,
-			"message":    fmt.Sprintf("Ticket with ID %d is not found", id),
+			"message":    fmt.Sprintf("Country with ID %d is not found", id),
 		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"status":     "success",
 		"statusCode": 200,
-		"message":    fmt.Sprintf("Ticket with ID %d has been deleted successfully", id),
+		"message":    fmt.Sprintf("Country with ID %d has been deleted successfully", id),
 	})
 }

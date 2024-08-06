@@ -12,6 +12,7 @@ func Migration() {
 		&models.Customer{},
 		&models.UserVerification{},
 		&models.Ticket{},
+		&models.Country{},
 	)
 
 	if err != nil {
