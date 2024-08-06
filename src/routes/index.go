@@ -10,4 +10,5 @@ func SetupRoutes(app *fiber.App) {
 	customerRoutes(app)
 	ticketsRoutes(app)
 	countriesRoutes(app)
+	citiesRoutes(app)
 }
