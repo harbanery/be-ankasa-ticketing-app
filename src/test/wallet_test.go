@@ -19,7 +19,7 @@ import (
 )
 
 func setupTestDatabase() {
-	url := "postgresql://postgres:postgres@127.0.0.1:5432/ankasa_travel"
+	url := "postgresql://postgres:@127.0.0.1:5432/ankasa_travel"
 	var err error
 	configs.DB, err = gorm.Open(postgres.Open(url), &gorm.Config{})
 	if err != nil {
@@ -57,7 +57,7 @@ func TestGetWallet(t *testing.T) {
 	configs.DB.First(&createdCustomer, "id = ?", customer.ID)
 	// log.Printf("Created customer: %+v", createdCustomer)
 
-	wallet := models.Wallet{CustomerID: createdCustomer.ID, Saldo: 100000}
+	wallet := models.Wallet{CustomerID: int(createdCustomer.ID), Saldo: 100000}
 	result := configs.DB.Create(&wallet)
 	if result.Error != nil {
 		log.Fatalf("Failed to create wallet: %v", result.Error)
@@ -88,7 +88,7 @@ func TestUpdateWallet(t *testing.T) {
 	customer := models.Customer{UserID: user.ID, Username: "jhon doe", PhoneNumber: "123456790", City: "Bandung"}
 	configs.DB.Create(&customer)
 
-	wallet := models.Wallet{CustomerID: customer.ID, Saldo: 100000}
+	wallet := models.Wallet{CustomerID: int(customer.ID), Saldo: 100000}
 	configs.DB.Create(&wallet)
 
 	app.Put("/wallets/:id", controllers.UpdateWallet)
@@ -115,7 +115,7 @@ func TestDeleteWallet(t *testing.T) {
 	customer := models.Customer{UserID: user.ID, Username: "jhon doe", PhoneNumber: "123456790", City: "Bandung"}
 	configs.DB.Create(&customer)
 
-	wallet := models.Wallet{CustomerID: customer.ID, Saldo: 100000}
+	wallet := models.Wallet{CustomerID: int(customer.ID), Saldo: 100000}
 	configs.DB.Create(&wallet)
 
 	app.Delete("/wallets/:id", controllers.DeleteWallet)

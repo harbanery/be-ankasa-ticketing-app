@@ -11,6 +11,10 @@ func Migration() {
 		&models.User{},
 		&models.Customer{},
 		&models.UserVerification{},
+		&models.Ticket{},
+		&models.Country{},
+		&models.City{},
+		&models.Category{},
 		&models.Wallet{},
 	)
 

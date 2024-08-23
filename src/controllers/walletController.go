@@ -49,7 +49,7 @@ func CreateWallet(c *fiber.Ctx) error {
 		})
 	}
 	newWalet := models.Wallet{
-		CustomerID: uint(user_id),
+		CustomerID: int(user_id),
 		Saldo:      0,
 	}
 	if err := models.CreateWallet(&newWalet); err != nil {
@@ -68,7 +68,7 @@ func UpdateWallet(c *fiber.Ctx) error {
 	var newWalet models.Wallet
 	var wallet models.Wallet
 	id, _ := strconv.Atoi(c.Params("id"))
-	res := models.GetWalletById(uint(id))
+	res := models.GetWalletById(id)
 	if res.ID == 0 {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": "Wallet not found",
@@ -79,7 +79,7 @@ func UpdateWallet(c *fiber.Ctx) error {
 			"error": "Invalid request body",
 		})
 	}
-	if err := models.UpdateWallet(uint(id), &newWalet); err != nil {
+	if err := models.UpdateWallet(id, &newWalet); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to update wallet",
 		})
@@ -92,7 +92,7 @@ func UpdateWallet(c *fiber.Ctx) error {
 
 func DeleteWallet(c *fiber.Ctx) error {
 	id, _ := strconv.Atoi(c.Params("id"))
-	if err := models.DeleteWallet(uint(id)); err != nil {
+	if err := models.DeleteWallet(id); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to delete wallet",
 		})
