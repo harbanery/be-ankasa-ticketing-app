@@ -11,4 +11,5 @@ func SetupRoutes(app *fiber.App) {
 	ticketsRoutes(app)
 	countriesRoutes(app)
 	citiesRoutes(app)
+	walletRoutes(app)
 }
