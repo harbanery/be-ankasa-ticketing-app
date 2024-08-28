@@ -18,6 +18,16 @@ type Customer struct {
 	PostalCode  string `json:"postal_code" validate:"required,numeric,max=5"`
 }
 
+type CustomerProfile struct {
+	Email       string `json:"email" validate:"requiered,email"`
+	Username    string `json:"username" validate:"required,max=50"`
+	PhoneNumber string `json:"phone_number" validate:"required,numeric,max=15"`
+	City        string `json:"city"  validate:"required"`
+	Image       string `json:"image" validate:"required"`
+	Address     string `json:"address" validate:"required"`
+	PostalCode  string `json:"postal_code" validate:"required,numeric,max=5"`
+}
+
 func CreateCustomer(customer *Customer) error {
 	result := configs.DB.Create(&customer)
 	return result.Error
