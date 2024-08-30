@@ -4,6 +4,7 @@ import (
 	"ankasa-be/src/configs"
 	"ankasa-be/src/helpers"
 	"ankasa-be/src/routes"
+	"ankasa-be/src/services"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -21,6 +22,7 @@ func App() *fiber.App {
 		ExposeHeaders: "Content-Length",
 	}))
 
+	services.InitHub()
 	configs.InitDB()
 	helpers.Migration()
 	routes.SetupRoutes(app)

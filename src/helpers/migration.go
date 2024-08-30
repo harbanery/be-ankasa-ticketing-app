@@ -15,6 +15,9 @@ func Migration() {
 		&models.Country{},
 		&models.City{},
 		&models.Category{},
+		&models.Chat{},
+		&models.ChatUser{},
+		&models.Message{},
 	)
 
 	if err != nil {
