@@ -7,6 +7,8 @@ import (
 )
 
 func merchantRoutes(app *fiber.App) {
-	customer := app.Group("/merchant")
-	customer.Get("/seed", controllers.GenerateMerchantSeed)
+	merchants := app.Group("/merchants")
+	merchants.Get("", controllers.GetAllMerchants)
+
+	merchants.Get("/seed", controllers.GenerateMerchantSeed)
 }

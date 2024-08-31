@@ -11,6 +11,14 @@ type Category struct {
 	Name     string `json:"name" validate:"required"`
 	Quantity string `json:"quantity" validate:"required"`
 	TicketID int    `json:"ticket_id" validate:"required"`
+	Seats    []Seat `json:"seats"`
+}
+
+type Seat struct {
+	gorm.Model
+	Code       string `json:"code" validate:"required"`
+	IsBooking  bool   `json:"is_booking"`
+	CategoryID int    `json:"category_id" validate:"required"`
 }
 
 func SelectAllCategories() ([]Category, error) {

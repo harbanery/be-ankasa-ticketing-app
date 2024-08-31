@@ -2,28 +2,49 @@ package models
 
 import (
 	"ankasa-be/src/configs"
+	"time"
 
 	"gorm.io/gorm"
 )
 
 type Ticket struct {
 	gorm.Model
-	Stock          uint       `json:"stock" validate:"required"`
-	Price          uint       `json:"price" validate:"required"`
-	Class          string     `json:"class" validate:"required"`
-	Gate           string     `json:"gate" validate:"required"`
-	IsRefund       bool       `json:"is_refund"`
-	IsReschedule   bool       `json:"is_reschedule"`
-	IsLuggage      bool       `json:"is_luggage"`
-	IsInflightMeal bool       `json:"is_inflight_meal"`
-	IsWifi         bool       `json:"is_wifi"`
-	Categories     []Category `json:"categories"`
+	Stock      int        `json:"stock" validate:"required"`
+	Price      float64    `json:"price" validate:"required"`
+	ClassID    uint       `json:"class_id" validate:"required"`
+	Class      Class      `gorm:"foreignKey:ClassID" json:"class"`
+	Gate       string     `json:"gate" validate:"required"`
+	Categories []Category `json:"categories"`
+	Arrival    Arrival    `json:"arrival"`
+	Departure  Departure  `json:"departure"`
+	// Transit        Transit    `json:"transit"`
+}
+
+type Arrival struct {
+	gorm.Model
+	Schedule *time.Time `json:"schedule" validate:"required"`
+	CityID   uint       `json:"city_id" validate:"required"`
+	TicketID uint       `json:"ticket_id" validate:"required"`
+}
+
+type Departure struct {
+	gorm.Model
+	Schedule *time.Time `json:"schedule" validate:"required"`
+	CityID   uint       `json:"city_id" validate:"required"`
+	TicketID uint       `json:"ticket_id" validate:"required"`
+}
+
+type Transit struct {
+	gorm.Model
+	Name     string `json:"name" validate:"required"`
+	CityID   uint   `json:"city_id" validate:"required"`
+	TicketID uint   `json:"ticket_id" validate:"required"`
 }
 
 func SelectAllTickets() ([]Ticket, error) {
 	var tickets []Ticket
 
-	err := configs.DB.Model(&Ticket{}).Preload("Categories").Find(&tickets).Error
+	err := configs.DB.Model(&Ticket{}).Preload("Class").Preload("Categories").Preload("Arrival").Preload("Departure").Find(&tickets).Error
 
 	if err != nil {
 		return nil, err
