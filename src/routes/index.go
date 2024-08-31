@@ -7,6 +7,7 @@ import (
 func SetupRoutes(app *fiber.App) {
 	mainRoutes(app)
 	userRoutes(app)
+	merchantRoutes(app)
 	customerRoutes(app)
 	ticketsRoutes(app)
 	categoriesRoutes(app)

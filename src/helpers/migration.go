@@ -9,6 +9,7 @@ import (
 func Migration() {
 	err := configs.DB.AutoMigrate(
 		&models.User{},
+		&models.Merchant{},
 		&models.Customer{},
 		&models.UserVerification{},
 		&models.Ticket{},

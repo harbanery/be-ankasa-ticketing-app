@@ -19,3 +19,9 @@ func CreateMerchant(merchant *Merchant) error {
 	result := configs.DB.Create(&merchant)
 	return result.Error
 }
+
+func SelectMerchants() []*Merchant {
+	var merchants []*Merchant
+	configs.DB.Find(&merchants)
+	return merchants
+}
