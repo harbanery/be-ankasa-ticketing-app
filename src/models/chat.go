@@ -63,8 +63,9 @@ func SelectChatsbyUserID(user_id int) []*Chat {
 
 	configs.DB.Preload("Messages", func(db *gorm.DB) *gorm.DB {
 		return db.Preload("User").Order("created_at DESC").Limit(1)
-	}).Preload("ChatUsers.User").
-		Joins("INNER JOIN chat_users ON chat_users.chat_id = chats.id AND chat_users.user_id IN (?)", user_id).
+	}).Preload("ChatUsers", func(db *gorm.DB) *gorm.DB {
+		return db.Preload("User").Where("user_id != ?", user_id)
+	}).Joins("INNER JOIN chat_users ON chat_users.chat_id = chats.id AND chat_users.user_id IN (?)", user_id).
 		Joins("INNER JOIN messages ON messages.chat_id = chats.id").
 		Group("chats.id").Having("COUNT(messages.id) > 0").
 		Find(&chats)
@@ -77,7 +78,9 @@ func SelectChatbyIDs(chat_id, user_id int) *Chat {
 
 	configs.DB.Preload("Messages", func(db *gorm.DB) *gorm.DB {
 		return db.Preload("User").Order("created_at DESC")
-	}).Preload("ChatUsers.User").Joins("INNER JOIN chat_users ON chat_users.chat_id = chats.id AND chat_users.user_id IN (?)", user_id).
+	}).Preload("ChatUsers", func(db *gorm.DB) *gorm.DB {
+		return db.Preload("User").Where("user_id != ?", user_id)
+	}).Joins("INNER JOIN chat_users ON chat_users.chat_id = chats.id AND chat_users.user_id IN (?)", user_id).
 		Joins("INNER JOIN messages ON messages.chat_id = chats.id").
 		Group("chats.id").First(&chat)
 
