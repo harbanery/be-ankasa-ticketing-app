@@ -9,6 +9,4 @@ import (
 func merchantRoutes(app *fiber.App) {
 	merchants := app.Group("/merchants")
 	merchants.Get("", controllers.GetAllMerchants)
-
-	merchants.Get("/seed", controllers.GenerateMerchantSeed)
 }
