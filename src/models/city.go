@@ -8,15 +8,16 @@ import (
 
 type City struct {
 	gorm.Model
-	Name      string `json:"name" validate:"required"`
-	Image     string `json:"image" validate:"required"`
-	CountryID int    `json:"country_id" validate:"required"`
+	Name      string  `json:"name" validate:"required"`
+	Image     string  `json:"image" validate:"required"`
+	CountryID int     `json:"country_id" validate:"required"`
+	Country   Country `gorm:"foreignKey:CountryID" json:"country"`
 }
 
 func SelectAllCities() ([]City, error) {
 	var cities []City
 
-	err := configs.DB.Find(&cities).Error
+	err := configs.DB.Preload("Country").Find(&cities).Error
 
 	if err != nil {
 		return nil, err
@@ -27,7 +28,7 @@ func SelectAllCities() ([]City, error) {
 
 func SelectCityById(id int) (City, error) {
 	var city City
-	if err := configs.DB.First(&city, "id = ?", id).Error; err != nil {
+	if err := configs.DB.Preload("Country").First(&city, "id = ?", id).Error; err != nil {
 		return City{}, err
 	}
 

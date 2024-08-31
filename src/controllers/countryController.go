@@ -63,7 +63,7 @@ func CreateCountry(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := models.CreateCountry(&country); err != nil {
+	if _, err := models.CreateCountry(&country); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status":     "internal server error",
 			"statusCode": fiber.StatusInternalServerError,

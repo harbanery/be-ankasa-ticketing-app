@@ -184,11 +184,130 @@ func GenerateMerchantSeed(c *fiber.Ctx) error {
 }
 
 func GenerateCityCountrySeed(c *fiber.Ctx) error {
+	cityExists, _ := models.SelectAllCities()
+	if len(cityExists) > 0 {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"status":     "forbidden",
+			"statusCode": 403,
+			"message":    "Cannot seed while already data in here",
+		})
+	}
+
+	countryExists, _ := models.SelectAllCountries()
+	if len(countryExists) > 0 {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"status":     "forbidden",
+			"statusCode": 403,
+			"message":    "Cannot seed while already data in here",
+		})
+	}
+
+	countries := []struct {
+		Name   string
+		Code   string
+		Cities []struct {
+			Name  string
+			Image string
+		}
+	}{
+		{
+			Name: "Indonesia",
+			Code: "IDN",
+			Cities: []struct {
+				Name  string
+				Image string
+			}{
+				{Name: "Jakarta", Image: "https://c4.wallpaperflare.com/wallpaper/702/43/725/jakarta-city-cityscape-wallpaper-preview.jpg"},
+				{Name: "Bali", Image: "https://s3-alpha-sig.figma.com/img/0656/5c4d/b656f5710f5e0f053aa347575fbc57a0?Expires=1725235200&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=Rzg75UjdbZ3okMWWhD-fvol15kkYQU6MwIc7hzfW8ei843Tf6lNWA02DJ7dihj9ogfgaP2-eOctXToKeaRiS721qkfYrjqm~bS95Sa9~jT8I6wUPsOlQAQKkeOtbToLw4~MGlEQZYsQyOibUXq05gpEBNRaLVNYa9602AXfmHLm-LCfO8DhSpYDpZM1zNg~akdjKGP-tVZjusqvKQANzc5UQl6oGSsS74uJVsXMgxht094T9GeJvnFaMU7SHeUha5ZwIuGtL3WYQn93G-vz3AXmJE-rQbJrEpZrguwgcBGhv-LsGnM0pnhXhdBe0shnVh3J5P2gCZEt2biwuY26BiA__"},
+			},
+		},
+		{
+			Name: "Singapore",
+			Code: "SGP",
+			Cities: []struct {
+				Name  string
+				Image string
+			}{
+				{Name: "Changi Bay", Image: "https://s3-alpha-sig.figma.com/img/91eb/c3b9/e985416af059aab94180bce2220da23c?Expires=1725235200&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=gFso4Fi-j-cDRRLtDLhaWLrpXoIJUIO~-l6zPhzQtMGih44nbJRxedYFGEfLh4DsbH2kIHQU3N~0He7aSdtJBX3eioys2PyMP0UAXZvAlJtJbms3WQsz342eusS~DqUUz6bDYf1aLioV4ZYF0zL77mwjRZh7n6tjLZvhyUyfEzYUmB~CCOwRTBW20ll~73EGvxbXBg~tvgc3lGU7oU6KwTvo4MoBbtTNj9D~RtrluXGVN-0yv9WOt~y4hJdea~yHJlL1nup01RbdSZys6p4PGUJfrA7G9zog8FmlcNWPCg~M1Wq6xF1cjeOy-pKHLNHDKiuXWBYxrPEdU7TSrW3KXQ__"},
+			},
+		},
+		{
+			Name: "Malaysia",
+			Code: "MYS",
+			Cities: []struct {
+				Name  string
+				Image string
+			}{
+				{Name: "Kuala Lumpur", Image: "https://media.istockphoto.com/id/955628078/id/foto/singapura-singapura.jpg?s=612x612&w=0&k=20&c=Di2CyvzJQWSYDe0pYPFxjNKiU3I8rUf4SP8hGfbtYDE="},
+			},
+		},
+		{
+			Name: "Japan",
+			Code: "JPN",
+			Cities: []struct {
+				Name  string
+				Image string
+			}{
+				{Name: "Tokyo", Image: "https://a.loveholidays.com/media-library/~production/6d7b5475d338ee30647c4b88d27fea204429081c-3840x1408.jpg?auto=avif%2Cwebp&quality=80&dpr=1.5&optimize=high&fit=crop&width=1280&height=380"},
+			},
+		},
+		{
+			Name: "France",
+			Code: "FRA",
+			Cities: []struct {
+				Name  string
+				Image string
+			}{
+				{Name: "Paris", Image: "https://s3-alpha-sig.figma.com/img/206e/fc86/f01e0ab7c33981f586273a726b9e138f?Expires=1725235200&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=LPBoB91Apbv21a8-x031xV5yX6ZRFjVR23GG9qllmDTQjsM0jNJ8wFMrv1p0uCoLztWbizaUB-CYc19PtLI9Y-Aauvlj5AW1WziwcstqkAKbRKwfDGLJUDvyiumhPc3HKhdAYJehoXh-vaPz0QJbyeFoULBVMQzi1fGQGpJ~q8rKwVl7sHwBg1uHcnZkRmfKOyrtrWQEnnBzLYHk0qxaiuFiFG4m~B6FA6sr-rnI~NUBsOaU4-vNyFaxn0y8fq5fZjluKX~i2V2T-ASBh8OFKucIy1USzccg8xuTFKuLEEkvJvFokymIRJVTwiENtW1-LVlzkcDZj-269XEYtfwOJg__"},
+			},
+		},
+		{
+			Name: "United States",
+			Code: "USA",
+			Cities: []struct {
+				Name  string
+				Image string
+			}{
+				{Name: "New York", Image: "https://images.pexels.com/photos/597909/pexels-photo-597909.jpeg"},
+			},
+		},
+	}
+
+	for _, countryData := range countries {
+		country := models.Country{
+			Name: countryData.Name,
+			Code: countryData.Code,
+		}
+
+		countryID, err := models.CreateCountry(&country)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"status":     "server error",
+				"statusCode": 500,
+				"message":    "Failed to create country",
+			})
+		}
+
+		for _, cityData := range countryData.Cities {
+			city := models.City{
+				Name:      cityData.Name,
+				Image:     cityData.Image,
+				CountryID: int(countryID),
+			}
+			if err := models.CreateCity(&city); err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"status":     "server error",
+					"statusCode": 500,
+					"message":    "Failed to create city",
+				})
+			}
+		}
+	}
+
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"status":     "success",
 		"statusCode": 200,
 		"message":    "Cities and countries created successfully.",
-		// "dataCreated": ticketMerchants,
 	})
 }
 
