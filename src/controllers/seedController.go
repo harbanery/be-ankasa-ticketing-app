@@ -2,8 +2,11 @@ package controllers
 
 import (
 	"ankasa-be/src/models"
-	"crypto/rand"
 	"encoding/hex"
+	"fmt"
+	"math/rand"
+	"strconv"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/crypto/bcrypt"
@@ -33,24 +36,37 @@ func GenerateMerchantSeed(c *fiber.Ctx) error {
 			Description: "Garuda Indonesia is the national airline of Indonesia, offering a wide range of domestic and international flights.",
 			Classes: []models.Class{
 				{
-					Name:           "Economy",
-					Quantity:       200,
-					Price:          1500000,
-					IsRefund:       true,
-					IsReschedule:   true,
-					IsLuggage:      true,
-					IsInflightMeal: true,
-					IsWifi:         false,
-				},
-				{
-					Name:           "Business",
-					Quantity:       50,
-					Price:          3000000,
+					Name:           "First Class",
+					Price:          6000000,
+					Seats:          8,
+					RowSeats:       4,
 					IsRefund:       true,
 					IsReschedule:   true,
 					IsLuggage:      true,
 					IsInflightMeal: true,
 					IsWifi:         true,
+				},
+				{
+					Name:           "Business",
+					Price:          3500000,
+					Seats:          38,
+					RowSeats:       7,
+					IsRefund:       true,
+					IsReschedule:   false,
+					IsLuggage:      true,
+					IsInflightMeal: true,
+					IsWifi:         true,
+				},
+				{
+					Name:           "Economy",
+					Price:          1500000,
+					Seats:          268,
+					RowSeats:       10,
+					IsRefund:       false,
+					IsReschedule:   false,
+					IsLuggage:      true,
+					IsInflightMeal: true,
+					IsWifi:         false,
 				},
 			},
 		},
@@ -61,12 +77,24 @@ func GenerateMerchantSeed(c *fiber.Ctx) error {
 			Description: "Air Asia is a low-cost airline headquartered in Malaysia, known for its affordable fares and extensive route network.",
 			Classes: []models.Class{
 				{
+					Name:           "Premium Economy",
+					Price:          2200000,
+					Seats:          110,
+					RowSeats:       9,
+					IsRefund:       true,
+					IsReschedule:   false,
+					IsLuggage:      true,
+					IsInflightMeal: true,
+					IsWifi:         true,
+				},
+				{
 					Name:           "Economy",
-					Quantity:       180,
 					Price:          1000000,
+					Seats:          270,
+					RowSeats:       9,
 					IsRefund:       false,
-					IsReschedule:   true,
-					IsLuggage:      false,
+					IsReschedule:   false,
+					IsLuggage:      true,
 					IsInflightMeal: false,
 					IsWifi:         false,
 				},
@@ -79,13 +107,25 @@ func GenerateMerchantSeed(c *fiber.Ctx) error {
 			Description: "Lion Air is an Indonesian low-cost airline, providing domestic and international flights with a focus on Southeast Asia.",
 			Classes: []models.Class{
 				{
-					Name:           "Economy",
-					Quantity:       200,
-					Price:          1200000,
-					IsRefund:       false,
-					IsReschedule:   true,
+					Name:           "Business",
+					Price:          2500000,
+					Seats:          10,
+					RowSeats:       4,
+					IsRefund:       true,
+					IsReschedule:   false,
 					IsLuggage:      true,
-					IsInflightMeal: false,
+					IsInflightMeal: true,
+					IsWifi:         true,
+				},
+				{
+					Name:           "Economy",
+					Price:          900000,
+					Seats:          198,
+					RowSeats:       6,
+					IsRefund:       false,
+					IsReschedule:   false,
+					IsLuggage:      true,
+					IsInflightMeal: true,
 					IsWifi:         false,
 				},
 			},
@@ -151,8 +191,9 @@ func GenerateMerchantSeed(c *fiber.Ctx) error {
 			class := models.Class{
 				MerchantID:     merchantID,
 				Name:           classData.Name,
-				Quantity:       classData.Quantity,
 				Price:          classData.Price,
+				Seats:          classData.Seats,
+				RowSeats:       classData.RowSeats,
 				IsRefund:       classData.IsRefund,
 				IsReschedule:   classData.IsReschedule,
 				IsLuggage:      classData.IsLuggage,
@@ -292,7 +333,7 @@ func GenerateCityCountrySeed(c *fiber.Ctx) error {
 			city := models.City{
 				Name:      cityData.Name,
 				Image:     cityData.Image,
-				CountryID: int(countryID),
+				CountryID: countryID,
 			}
 			if err := models.CreateCity(&city); err != nil {
 				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -312,10 +353,123 @@ func GenerateCityCountrySeed(c *fiber.Ctx) error {
 }
 
 func GenerateTicketSeed(c *fiber.Ctx) error {
+	ticketExists := models.SelectAllTickets()
+	if len(ticketExists) > 0 {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"status":     "forbidden",
+			"statusCode": 403,
+			"message":    "Cannot seed while already data in here",
+		})
+	}
+
+	merchants := models.SelectAllMerchants()
+	if len(merchants) == 0 {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"status":     "not found",
+			"statusCode": 404,
+			"message":    "Merchants not found",
+		})
+	}
+
+	cities, _ := models.SelectAllCities()
+	if len(cities) == 0 {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"status":     "not found",
+			"statusCode": 404,
+			"message":    "Cities not found",
+		})
+	}
+
+	// rand.Seed(time.Now().UnixNano())
+
+	for _, merchant := range merchants {
+		rowStart := 1
+		for _, class := range merchant.Classes {
+			stock := class.Seats
+			if stock == 0 {
+				return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+					"status":     "not found",
+					"statusCode": 404,
+					"message":    "No stock in here",
+				})
+			}
+			price := class.Price
+			rowSeats := class.RowSeats
+
+			departureCity := cities[rand.Intn(len(cities))]
+			arrivalCity := cities[rand.Intn(len(cities))]
+			for arrivalCity.ID == departureCity.ID {
+				arrivalCity = cities[rand.Intn(len(cities))]
+			}
+
+			departureTime := generateRandomTime()
+			arrivalTime := departureTime.Add(time.Duration(rand.Intn(3)+2) * time.Hour) // 2-4 jam setelah arrival
+
+			departure := models.Departure{
+				Schedule: &departureTime,
+				CityID:   departureCity.ID,
+			}
+
+			arrival := models.Arrival{
+				Schedule: &arrivalTime,
+				CityID:   arrivalCity.ID,
+			}
+
+			ticket := models.Ticket{
+				Stock:      stock,
+				Price:      price,
+				MerchantID: merchant.ID,
+				ClassID:    class.ID,
+				Gate:       "G-" + strconv.Itoa(rand.Intn(20)+1),
+				Arrival:    arrival,
+				Departure:  departure,
+			}
+
+			ticketID, err := models.CreateTicket(&ticket)
+			if err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"status":     "server error",
+					"statusCode": 500,
+					"message":    "Failed to create ticket",
+				})
+			}
+
+			seats := make([]models.Seat, stock)
+			rowLetters := []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+			for i := 0; i < stock; i++ {
+				row := (rowStart) + (i / rowSeats)
+				seatIndex := i % rowSeats
+				seatCode := fmt.Sprintf("%d-%c", row, rowLetters[seatIndex])
+
+				seats[i] = models.Seat{
+					Code:      seatCode,
+					IsBooking: false,
+					TicketID:  ticketID,
+				}
+
+				if err := models.CreateSeat(&seats[i]); err != nil {
+					return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+						"status":     "server error",
+						"statusCode": 500,
+						"message":    "Failed to create seat",
+					})
+				}
+
+			}
+			rowStart += (stock / rowSeats) + 1
+
+		}
+	}
+
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"status":     "success",
 		"statusCode": 200,
-		"message":    "Tickets created successfully.",
-		// "dataCreated": ticketMerchants,
+		"message":    "Tickets with arrival, departure, and seats created successfully.",
 	})
+}
+
+func generateRandomTime() time.Time {
+	now := time.Now()
+	randomOffset := time.Duration(rand.Intn(48)) * time.Hour
+	return now.Add(randomOffset)
 }

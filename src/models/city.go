@@ -10,7 +10,7 @@ type City struct {
 	gorm.Model
 	Name      string  `json:"name" validate:"required"`
 	Image     string  `json:"image" validate:"required"`
-	CountryID int     `json:"country_id" validate:"required"`
+	CountryID uint    `json:"country_id" validate:"required"`
 	Country   Country `gorm:"foreignKey:CountryID" json:"country"`
 }
 

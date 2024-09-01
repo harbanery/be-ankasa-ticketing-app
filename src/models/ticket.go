@@ -9,14 +9,16 @@ import (
 
 type Ticket struct {
 	gorm.Model
-	Stock      int        `json:"stock" validate:"required"`
-	Price      float64    `json:"price" validate:"required"`
-	ClassID    uint       `json:"class_id" validate:"required"`
-	Class      Class      `gorm:"foreignKey:ClassID" json:"class"`
-	Gate       string     `json:"gate" validate:"required"`
-	Categories []Category `json:"categories"`
-	Arrival    Arrival    `json:"arrival"`
-	Departure  Departure  `json:"departure"`
+	Stock      int       `json:"stock" validate:"required"`
+	Price      float64   `json:"price" validate:"required"`
+	MerchantID uint      `json:"merchant_id" validate:"required"`
+	Merchant   Merchant  `gorm:"foreignKey:MerchantID" json:"merchant"`
+	ClassID    uint      `json:"class_id" validate:"required"`
+	Class      Class     `gorm:"foreignKey:ClassID" json:"class"`
+	Gate       string    `json:"gate" validate:"required"`
+	Seats      []Seat    `json:"seats"`
+	Arrival    Arrival   `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"arrival"`
+	Departure  Departure `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"departure"`
 	// Transit        Transit    `json:"transit"`
 }
 
@@ -24,6 +26,7 @@ type Arrival struct {
 	gorm.Model
 	Schedule *time.Time `json:"schedule" validate:"required"`
 	CityID   uint       `json:"city_id" validate:"required"`
+	City     City       `gorm:"foreignKey:CityID" json:"city"`
 	TicketID uint       `json:"ticket_id" validate:"required"`
 }
 
@@ -31,6 +34,7 @@ type Departure struct {
 	gorm.Model
 	Schedule *time.Time `json:"schedule" validate:"required"`
 	CityID   uint       `json:"city_id" validate:"required"`
+	City     City       `gorm:"foreignKey:CityID" json:"city"`
 	TicketID uint       `json:"ticket_id" validate:"required"`
 }
 
@@ -38,33 +42,52 @@ type Transit struct {
 	gorm.Model
 	Name     string `json:"name" validate:"required"`
 	CityID   uint   `json:"city_id" validate:"required"`
+	City     City   `gorm:"foreignKey:CityID" json:"city"`
 	TicketID uint   `json:"ticket_id" validate:"required"`
 }
 
-func SelectAllTickets() ([]Ticket, error) {
-	var tickets []Ticket
+func SelectAllTickets() []*Ticket {
+	var tickets []*Ticket
 
-	err := configs.DB.Model(&Ticket{}).Preload("Class").Preload("Categories").Preload("Arrival").Preload("Departure").Find(&tickets).Error
+	configs.DB.Model(&Ticket{}).
+		Preload("Merchant").Preload("Class").
+		Preload("Arrival", func(db *gorm.DB) *gorm.DB {
+			return db.Preload("City", func(db *gorm.DB) *gorm.DB {
+				return db.Preload("Country")
+			})
+		}).Preload("Departure", func(db *gorm.DB) *gorm.DB {
+		return db.Preload("City", func(db *gorm.DB) *gorm.DB {
+			return db.Preload("Country")
+		})
+	}).Order("created_at DESC").Find(&tickets)
 
-	if err != nil {
-		return nil, err
-	}
-
-	return tickets, nil
+	return tickets
 }
 
 func SelectTicketById(id int) (Ticket, error) {
 	var ticket Ticket
-	if err := configs.DB.Model(&Ticket{}).Preload("Categories").First(&ticket, "id = ?", id).Error; err != nil {
+	err := configs.DB.Model(&Ticket{}).
+		Preload("Merchant").Preload("Class").Preload("Seats").
+		Preload("Arrival", func(db *gorm.DB) *gorm.DB {
+			return db.Preload("City", func(db *gorm.DB) *gorm.DB {
+				return db.Preload("Country")
+			})
+		}).Preload("Departure", func(db *gorm.DB) *gorm.DB {
+		return db.Preload("City", func(db *gorm.DB) *gorm.DB {
+			return db.Preload("Country")
+		})
+	}).First(&ticket, "id = ?", id).Error
+
+	if err != nil {
 		return Ticket{}, err
 	}
 
 	return ticket, nil
 }
 
-func CreateTicket(ticket *Ticket) error {
+func CreateTicket(ticket *Ticket) (uint, error) {
 	err := configs.DB.Create(&ticket).Error
-	return err
+	return ticket.ID, err
 }
 
 func UpdateTicketById(id int, updatedTicket Ticket) (int, error) {

@@ -62,7 +62,7 @@ func CreateCategory(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := models.CreateCategory(&category); err != nil {
+	if _, err := models.CreateCategory(&category); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status":     "internal server error",
 			"statusCode": fiber.StatusInternalServerError,

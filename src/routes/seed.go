@@ -11,4 +11,5 @@ func seedRoutes(app *fiber.App) {
 
 	seeds.Get("/merchants", controllers.GenerateMerchantSeed)
 	seeds.Get("/destinations", controllers.GenerateCityCountrySeed)
+	seeds.Get("/tickets", controllers.GenerateTicketSeed)
 }

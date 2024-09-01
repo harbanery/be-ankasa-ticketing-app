@@ -18,7 +18,6 @@ func Migration() {
 		&models.Departure{},
 		&models.Country{},
 		&models.City{},
-		&models.Category{},
 		&models.Seat{},
 		&models.Chat{},
 		&models.ChatUser{},

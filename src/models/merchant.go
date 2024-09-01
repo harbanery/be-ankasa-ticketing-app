@@ -18,15 +18,16 @@ type Merchant struct {
 
 type Class struct {
 	gorm.Model
-	MerchantID     uint   `json:"merchant_id" validate:"required"`
-	Name           string `json:"name" validate:"required,max=50"`
-	Quantity       uint   `json:"quantity" validate:"required"`
-	Price          uint   `json:"price" validate:"required"`
-	IsRefund       bool   `json:"is_refund"`
-	IsReschedule   bool   `json:"is_reschedule"`
-	IsLuggage      bool   `json:"is_luggage"`
-	IsInflightMeal bool   `json:"is_inflight_meal"`
-	IsWifi         bool   `json:"is_wifi"`
+	MerchantID     uint    `json:"merchant_id" validate:"required"`
+	Name           string  `json:"name" validate:"required,max=50"`
+	Price          float64 `json:"price" validate:"required"`
+	Seats          int     `json:"seats" validate:"required"`
+	RowSeats       int     `json:"row_seats"`
+	IsRefund       bool    `json:"is_refund"`
+	IsReschedule   bool    `json:"is_reschedule"`
+	IsLuggage      bool    `json:"is_luggage"`
+	IsInflightMeal bool    `json:"is_inflight_meal"`
+	IsWifi         bool    `json:"is_wifi"`
 }
 
 func CreateMerchant(merchant *Merchant) (uint, error) {
