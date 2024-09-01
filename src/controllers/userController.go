@@ -131,6 +131,17 @@ func RegisterUser(c *fiber.Ctx) error {
 				"message":    "Failed to create customer",
 			})
 		}
+		walletCustomer := models.Wallet{
+			CustomerID: int(newCustomer.ID),
+			Saldo:      0,
+		}
+		if err := models.CreateWallet(&walletCustomer); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"status":     "server error",
+				"statusCode": 500,
+				"message":    "Failed to create wallet customer",
+			})
+		}
 	}
 
 	newUserVerification := models.UserVerification{

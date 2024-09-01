@@ -6,6 +6,19 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 )
+// Buat testing aja
+func GetCustomers(c *fiber.Ctx) error {
+	customer := models.SelectCustomers()
+	if len(customer) == 0 {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"status":     "not found",
+			"statusCode": 404,
+			"message":    "customer not found.",
+		})
+	}
+	return c.Status(200).JSON(customer)
+}
+// 
 
 func GetCustomerProfile(c *fiber.Ctx) error {
 	user_id, err := middlewares.JWTAuthorize(c, "customer")
