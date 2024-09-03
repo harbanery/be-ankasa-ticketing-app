@@ -88,6 +88,7 @@ func GetTicketById(c *fiber.Ctx) error {
 		"arrival_city":           ticket.Arrival.City.Name,
 		"arrival_country_code":   ticket.Arrival.City.Country.Code,
 		"price":                  ticket.Price,
+		"gate":                   ticket.Gate,
 		"class":                  ticket.Class.Name,
 		"is_refund":              ticket.Class.IsRefund,
 		"is_reschedule":          ticket.Class.IsReschedule,
