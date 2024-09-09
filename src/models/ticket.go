@@ -67,12 +67,13 @@ func SelectAllTickets() []*Ticket {
 func SelectTicketById(id int) (Ticket, error) {
 	var ticket Ticket
 	err := configs.DB.Model(&Ticket{}).
-		Preload("Merchant").Preload("Class").Preload("Seats").
-		Preload("Arrival", func(db *gorm.DB) *gorm.DB {
-			return db.Preload("City", func(db *gorm.DB) *gorm.DB {
-				return db.Preload("Country")
-			})
-		}).Preload("Departure", func(db *gorm.DB) *gorm.DB {
+		Preload("Merchant").Preload("Class").Preload("Seats", func(db *gorm.DB) *gorm.DB {
+		return db.Order("created_at ASC")
+	}).Preload("Arrival", func(db *gorm.DB) *gorm.DB {
+		return db.Preload("City", func(db *gorm.DB) *gorm.DB {
+			return db.Preload("Country")
+		})
+	}).Preload("Departure", func(db *gorm.DB) *gorm.DB {
 		return db.Preload("City", func(db *gorm.DB) *gorm.DB {
 			return db.Preload("Country")
 		})
