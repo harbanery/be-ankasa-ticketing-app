@@ -23,6 +23,7 @@ func App() *fiber.App {
 	}))
 
 	services.InitHub()
+	services.InitXendit()
 	configs.InitDB()
 	helpers.Migration()
 	routes.SetupRoutes(app)

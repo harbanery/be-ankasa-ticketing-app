@@ -23,6 +23,8 @@ func Migration() {
 		&models.ChatUser{},
 		&models.Message{},
 		&models.Wallet{},
+		&models.Order{},
+		&models.Passenger{},
 	)
 
 	if err != nil {

@@ -16,4 +16,5 @@ func SetupRoutes(app *fiber.App) {
 	chatsRoutes(app)
 	seedRoutes(app)
 	walletRoutes(app)
+	ordersRoutes(app)
 }
