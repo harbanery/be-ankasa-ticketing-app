@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-func GenerateURL(userID int, pathname string) (string, string, error) {
+func GenerateAuthTokenURL(userID int, pathname string) (string, string, error) {
 	uuid := strconv.Itoa(userID)
 
 	tokenBytes := make([]byte, 64)
@@ -17,6 +17,6 @@ func GenerateURL(userID int, pathname string) (string, string, error) {
 
 	token := hex.EncodeToString(tokenBytes)
 
-	url := os.Getenv("API_URL") + pathname + "?id=" + uuid + "&token=" + token
+	url := os.Getenv("APP_URL") + pathname + "?id=" + uuid + "&token=" + token
 	return url, token, nil
 }

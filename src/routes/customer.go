@@ -9,6 +9,10 @@ import (
 
 func customerRoutes(app *fiber.App) {
 	customer := app.Group("/customer")
+	// Buat testing aja
+	customer.Get("/", controllers.GetCustomers)
+	// 
+	
 	customer.Get("/profile", middlewares.JWTMiddleware(), controllers.GetCustomerProfile)
 	customer.Put("/profile", middlewares.JWTMiddleware(), controllers.UpdateCustomerProfile)
 }
