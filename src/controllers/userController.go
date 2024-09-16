@@ -104,19 +104,19 @@ func RegisterUser(c *fiber.Ctx) error {
 	}
 
 	// if newUser.Role == "merchant" {
-	// 	newSeller := models.Merchant{
+	// 	newMerchant := models.Merchant{
 	// 		UserID: userID,
-	// 		Username:   user.Username,
+	// 		Name:   user.Username,
 	// 	}
 
-	// 	if err := models.CreateSeller(&newSeller); err != nil {
+	// 	if err := models.CreateMerchant(&newMerchant); err != nil {
 	// 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 	// 			"status":     "server error",
 	// 			"statusCode": 500,
-	// 			"message":    "Failed to create seller",
+	// 			"message":    "Failed to create merchant",
 	// 		})
 	// 	}
-	// }
+	// } else
 
 	if newUser.Role == "customer" {
 		newCustomer := models.Customer{

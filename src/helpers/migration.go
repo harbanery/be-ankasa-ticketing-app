@@ -9,13 +9,22 @@ import (
 func Migration() {
 	err := configs.DB.AutoMigrate(
 		&models.User{},
+		&models.Merchant{},
 		&models.Customer{},
 		&models.UserVerification{},
+		&models.Class{},
 		&models.Ticket{},
+		&models.Arrival{},
+		&models.Departure{},
 		&models.Country{},
 		&models.City{},
-		&models.Category{},
+		&models.Seat{},
+		&models.Chat{},
+		&models.ChatUser{},
+		&models.Message{},
 		&models.Wallet{},
+		&models.Order{},
+		&models.Passenger{},
 	)
 
 	if err != nil {

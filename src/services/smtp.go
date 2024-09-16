@@ -17,26 +17,6 @@ type EmailData struct {
 	URL     string
 }
 
-// func SendEmail(email, subject, url string) error {
-// 	m := gomail.NewMessage()
-// 	m.SetHeader("From", os.Getenv("SMTP_EMAIL_SENDER"))
-// 	m.SetHeader("To", email)
-// 	m.SetHeader("Subject", subject)
-// 	m.SetBody("text/html", `<h1>Email Confirmation</h1>
-//                     <h2>Hello `+email+`</h2>
-//                     <p>Thank you for joining us. Please confirm your email by clicking on the following link</p>
-//                     <a href='`+url+`'> Click here</a>
-// 					atau masuk ke link `+url)
-
-// 	d := gomail.NewDialer("smtp.gmail.com", 587, os.Getenv("SMTP_EMAIL_SENDER"), os.Getenv("SMTP_EMAIL_PASS"))
-
-// 	if err := d.DialAndSend(m); err != nil {
-// 		return err
-// 	}
-
-// 	return nil
-// }
-
 func SendEmailVerification(email, name, token string, userID int) error {
 	appName := os.Getenv("APP_NAME")
 	appUrl := os.Getenv("APP_URL")
@@ -80,28 +60,6 @@ func SendEmailVerification(email, name, token string, userID int) error {
 	m.SetHeader("To", email)
 	m.SetHeader("Subject", "Email Verification - "+appName)
 	m.SetBody("text/html", body.String())
-
-	// m.SetBody("text/html", `<div style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; background-color: #F5F6FA; border-radius: 20px; width: 100%; margin: auto;">
-	// 							<div class="card"
-	// 							style="text-align: center; border-radius: 10px; overflow: hidden; width: 100%; max-width: 400px; background-color: white; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin: auto;">
-	// 							<div class="card-header" style="background-color: #2395FF; padding: 20px; color: white;">
-	// 								<h1>Email Verification</h1>
-	// 							</div>
-	// 							<div class="card-body" style="padding: 20px;">
-	// 								<h2 style="margin-bottom: 16px;">Dear Mr./Ms. `+name+`,</h2>
-	// 								<p style="margin-bottom: 40px;">Thank you for registering with us. Please click the button below to verify your
-	// 								email address and activate your account.</p>
-	// 								<a href='`+url+`' class="button"
-	// 								style="background-color: #2395FF; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none;">Verify
-	// 								Email</a>
-	// 								<p style=" margin-top: 40px;">If you did not register for an account, please ignore this email.</p>
-	// 							</div>
-	// 							<div class="card-footer"
-	// 								style="padding: 20px; background-color: #f5f5f5; text-align: center; font-size: 14px; color: #666;">
-	// 								@2024 `+os.Getenv("APP_NAME")+`
-	// 							</div>
-	// 							</div>
-	// 						</div>`)
 
 	d := gomail.NewDialer("smtp.gmail.com", 587, provider, password)
 
@@ -155,26 +113,6 @@ func SendRequestResetPassword(email, name, token string, userID int) error {
 	m.SetHeader("To", email)
 	m.SetHeader("Subject", "Reset Password - "+appName)
 	m.SetBody("text/html", body.String())
-
-	// m.SetBody("text/html", `<div style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; background-color: #F5F6FA; border-radius: 20px; width: 100%; margin: auto;">
-	// 							<div class="card"
-	// 							style="text-align: center; border-radius: 10px; overflow: hidden; width: 100%; max-width: 400px; background-color: white; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin: auto;">
-	// 							<div class="card-header" style="background-color: #2395FF; padding: 20px; color: white;">
-	// 								<h1>Reset Password</h1>
-	// 							</div>
-	// 							<div class="card-body" style="padding: 20px;">
-	// 								<h2 style="margin-bottom: 16px;">Dear Mr./Ms. `+name+`,</h2>
-	// 								<p style="margin-bottom: 40px;">Follow this link to reset your password for your account.</p>
-	// 								<a href='`+url+`' class="button"
-	// 								style="background-color: #2395FF; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none;">Reset Password</a>
-	// 								<p style=" margin-top: 40px;">If you didn't ask to reset your password, please ignore this email.</p>
-	// 							</div>
-	// 							<div class="card-footer"
-	// 								style="padding: 20px; background-color: #f5f5f5; text-align: center; font-size: 14px; color: #666;">
-	// 								@2024 `+os.Getenv("APP_NAME")+`
-	// 							</div>
-	// 							</div>
-	// 						</div>`)
 
 	d := gomail.NewDialer("smtp.gmail.com", 587, provider, password)
 

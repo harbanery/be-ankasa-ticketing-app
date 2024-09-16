@@ -34,9 +34,9 @@ func SelectCountryById(id int) (Country, error) {
 	return country, nil
 }
 
-func CreateCountry(country *Country) error {
+func CreateCountry(country *Country) (uint, error) {
 	err := configs.DB.Create(&country).Error
-	return err
+	return country.ID, err
 }
 
 func UpdateCountryById(id int, updatedCountry Country) (int, error) {

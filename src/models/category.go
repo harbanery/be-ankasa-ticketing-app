@@ -9,8 +9,9 @@ import (
 type Category struct {
 	gorm.Model
 	Name     string `json:"name" validate:"required"`
-	Quantity string `json:"quantity" validate:"required"`
-	TicketID int    `json:"ticket_id" validate:"required"`
+	Quantity int    `json:"quantity" validate:"required"`
+	TicketID uint   `json:"ticket_id" validate:"required"`
+	Seats    []Seat `json:"seats"`
 }
 
 func SelectAllCategories() ([]Category, error) {
@@ -34,9 +35,9 @@ func SelectCategoryById(id int) (Category, error) {
 	return category, nil
 }
 
-func CreateCategory(category *Category) error {
+func CreateCategory(category *Category) (uint, error) {
 	err := configs.DB.Create(&category).Error
-	return err
+	return category.ID, err
 }
 
 func UpdateCategoryById(id int, updatedCategory Category) (int, error) {

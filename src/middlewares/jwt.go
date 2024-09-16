@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -69,6 +70,20 @@ func JWTAuthorize(c *fiber.Ctx, requiredRole string) (float64, error) {
 		if !ok || role != requiredRole {
 			return 0, fiber.NewError(fiber.StatusForbidden, "Incorrect role")
 		}
+	}
+
+	id, ok := user["id"].(float64)
+	if !ok {
+		return 0, fiber.NewError(fiber.StatusBadRequest, "Invalid ID format")
+	}
+
+	return id, nil
+}
+
+func JWTWebsocketAuthorize(c *websocket.Conn) (float64, error) {
+	user, ok := c.Locals("user").(jwt.MapClaims)
+	if !ok {
+		return 0, fiber.NewError(fiber.StatusUnauthorized, "Unauthorized")
 	}
 
 	id, ok := user["id"].(float64)
