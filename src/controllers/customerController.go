@@ -4,9 +4,11 @@ import (
 	"ankasa-be/src/helpers"
 	"ankasa-be/src/middlewares"
 	"ankasa-be/src/models"
+	"ankasa-be/src/services"
 
 	"github.com/gofiber/fiber/v2"
 )
+
 // Buat testing aja
 func GetCustomers(c *fiber.Ctx) error {
 	customer := models.SelectCustomers()
@@ -19,7 +21,8 @@ func GetCustomers(c *fiber.Ctx) error {
 	}
 	return c.Status(200).JSON(customer)
 }
-// 
+
+//
 
 func GetCustomerProfile(c *fiber.Ctx) error {
 	user_id, err := middlewares.JWTAuthorize(c, "customer")
@@ -71,7 +74,7 @@ func GetCustomerProfile(c *fiber.Ctx) error {
 }
 
 func UpdateCustomerProfile(c *fiber.Ctx) error {
-	var profileData models.CustomerProfile
+	var profileData models.ProfileCustomer
 
 	id, err := middlewares.JWTAuthorize(c, "customer")
 	if err != nil {
@@ -106,7 +109,7 @@ func UpdateCustomerProfile(c *fiber.Ctx) error {
 		})
 	}
 
-	user := middlewares.XSSMiddleware(&profileData).(*models.CustomerProfile)
+	user := middlewares.XSSMiddleware(&profileData).(*models.ProfileCustomer)
 	if errors := helpers.StructValidation(user); len(errors) > 0 {
 		return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
 			"status":     "unprocessable entity",
@@ -115,44 +118,98 @@ func UpdateCustomerProfile(c *fiber.Ctx) error {
 			"error":      errors,
 		})
 	}
-
-	if customer.User.Email != user.Email {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"status": "bad request",
-			"statusCode": 400,
-			"message": "Email already exists",
-		})
-	}
-
 	updatedCustomer := models.Customer{
-		Username: user.Username,
+		Username:    user.Username,
 		PhoneNumber: user.PhoneNumber,
-		City: user.City,
-		Image: user.Image,
-		Address: user.Address,
-		PostalCode: user.PostalCode,
+		City:        user.City,
+		Image:       user.Image,
+		Address:     user.Address,
+		PostalCode:  user.PostalCode,
 	}
 
 	if err := models.UpdateUserSingle(int(id), "email", user.Email); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"status": "server error",
+			"status":     "server error",
 			"statusCode": 500,
-			"message": "Failed to update user",
+			"message":    "Failed to update user",
 		})
 	}
 
 	if err := models.UpdateCustomer(int(customer.ID), &updatedCustomer); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"status": "server error",
+			"status":     "server error",
 			"statusCode": 500,
-			"message": "Failed to update customer",
+			"message":    "Failed to update customer",
 		})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"status": "success",
+		"status":     "success",
 		"statusCode": 200,
-		"message": "Profile updated successfully",
+		"message":    "Profile updated successfully",
 	})
+}
+func UploadProfileImage(c *fiber.Ctx) error {
+	// Mendapatkan ID user dari JWT
+	id, err := middlewares.JWTAuthorize(c, "customer")
+	if err != nil {
+		if fiberErr, ok := err.(*fiber.Error); ok {
+			return c.Status(fiberErr.Code).JSON(fiber.Map{
+				"status":     fiberErr.Message,
+				"statusCode": fiberErr.Code,
+				"message":    fiberErr.Message,
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":     "Internal Server Error",
+			"statusCode": fiber.StatusInternalServerError,
+			"message":    err.Error(),
+		})
+	}
 
+	// Mengambil file gambar dari request
+	file, err := c.FormFile("image")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"status":     "bad request",
+			"statusCode": 400,
+			"message":    "Failed to retrieve image from request",
+		})
+	}
+
+	// Upload file ke Cloudinary
+	uploadResult, err := services.UploadCloudinary(c, file)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":     "server error",
+			"statusCode": 500,
+			"message":    "Failed to upload image to Cloudinary",
+		})
+	}
+
+	// Memperbarui profil user dengan URL gambar dari Cloudinary
+	customer := models.SelectCustomerfromUserID(int(id))
+	if customer.ID == 0 {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"status":     "Not Found",
+			"statusCode": 404,
+			"message":    "Customer not found",
+		})
+	}
+
+	customer.Image = uploadResult.SecureURL
+	if err := models.UpdateCustomer(int(customer.ID), customer); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":     "server error",
+			"statusCode": 500,
+			"message":    "Failed to update customer image",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"status":     "success",
+		"statusCode": 200,
+		"message":    "Image uploaded and profile updated successfully",
+		"image_url":  uploadResult.SecureURL,
+	})
 }
