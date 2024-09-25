@@ -9,9 +9,9 @@ import (
 
 func ordersRoutes(app *fiber.App) {
 	orders := app.Group("/orders")
-	orders.Get("/", controllers.GetAllOrders)
-	// orders.Get("/:id", controllers.GetTicketById)
-	orders.Post("/", middlewares.JWTMiddleware(), controllers.CreateOrder)
-	// orders.Put("/:id", controllers.UpdateTicket)
-	// orders.Delete("/:id", controllers.DeleteTicket)
+	orders.Get("/", middlewares.JWTMiddleware(), controllers.GetAllOrders)
+	orders.Get("/:id", middlewares.JWTMiddleware(), controllers.GetBookingPass)
+	orders.Post("/", middlewares.JWTMiddleware(), controllers.CreatePaymentOrder)
+	orders.Post("/payment_method", controllers.HandlePaymentMethodCallback)
+	orders.Post("/payment", controllers.HandlePaymentRequestCallback)
 }

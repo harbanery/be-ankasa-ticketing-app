@@ -18,6 +18,12 @@ func CreateSeat(seat *Seat) error {
 	return err
 }
 
+func SelectSeatBooking(id int) *Seat {
+	var seat *Seat
+	configs.DB.First(&seat, "id = ? AND is_booking = ?", &id, true)
+	return seat
+}
+
 func UpdateSeatIsBooking(id int, value bool) error {
 	result := configs.DB.Model(&Seat{}).Where("id = ?", id).Update("is_booking", value)
 	return result.Error
