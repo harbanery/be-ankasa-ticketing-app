@@ -64,7 +64,7 @@ func EWalletPaymentMethod(ewallet *models.PaymentMethodEWallet) (*string, error)
 		return nil, fmt.Errorf("create payment method response is nil")
 	}
 
-	return createPMResp.BusinessId, nil
+	return createPMResp.ReferenceId, nil
 }
 
 func CardPaymentMethod(card *models.PaymentMethodCard) (*string, error) {
@@ -98,5 +98,5 @@ func CardPaymentMethod(card *models.PaymentMethodCard) (*string, error) {
 		PaymentMethodParameters(paymentMethodParameters).
 		Execute()
 
-	return createPMResp.BusinessId, err
+	return createPMResp.ReferenceId, err
 }

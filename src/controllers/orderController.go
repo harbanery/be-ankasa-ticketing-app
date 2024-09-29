@@ -220,39 +220,11 @@ func CreatePaymentOrder(c *fiber.Ctx) error {
 		}
 	}
 
-	for _, passenger := range order.Passengers {
-		if err := models.UpdateSeatIsBooking(int(passenger.SeatID), true); err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"status":     "internal server error",
-				"statusCode": fiber.StatusInternalServerError,
-				"message":    err.Error(),
-			})
-		}
-	}
-
-	ticket.Stock -= len(order.Passengers)
-	if err := models.UpdateTicketSingle(int(ticket.ID), "stock", ticket.Stock); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"status":     "internal server error",
-			"statusCode": fiber.StatusInternalServerError,
-			"message":    err.Error(),
-		})
-	}
-
-	orderID, err := models.CreateOrder(&order)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"status":     "internal server error",
-			"statusCode": fiber.StatusInternalServerError,
-			"message":    err.Error(),
-		})
-	}
-
-	var businessID *string
+	var referenceID *string
 	if orderReq.PaymentMethodType != "INTERNAL" {
 		var err error
 		if orderReq.PaymentMethodType == "EWALLET" {
-			businessID, err = services.EWalletPaymentMethod(orderReq.PaymentMethodEWallet)
+			referenceID, err = services.EWalletPaymentMethod(orderReq.PaymentMethodEWallet)
 		} else {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"status":     "forbidden",
@@ -274,7 +246,27 @@ func CreatePaymentOrder(c *fiber.Ctx) error {
 		order.PaidAt = &now
 		order.IsActive = true
 
-		if _, err := models.UpdateOrderById(int(orderID), order); err != nil {
+		for _, passenger := range order.Passengers {
+			if err := models.UpdateSeatIsBooking(int(passenger.SeatID), true); err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"status":     "internal server error",
+					"statusCode": fiber.StatusInternalServerError,
+					"message":    err.Error(),
+				})
+			}
+		}
+
+		ticket.Stock -= len(order.Passengers)
+		if err := models.UpdateTicketSingle(int(ticket.ID), "stock", ticket.Stock); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"status":     "internal server error",
+				"statusCode": fiber.StatusInternalServerError,
+				"message":    err.Error(),
+			})
+		}
+
+		err := models.CreateOrder(&order)
+		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"status":     "internal server error",
 				"statusCode": fiber.StatusInternalServerError,
@@ -289,15 +281,36 @@ func CreatePaymentOrder(c *fiber.Ctx) error {
 		})
 	}
 
-	if businessID == nil && orderReq.PaymentMethodType != "INTERNAL" {
+	if referenceID == nil && orderReq.PaymentMethodType != "INTERNAL" {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 			"status":     "forbidden",
 			"statusCode": 403,
 			"message":    "Payment can't completed",
 		})
 	}
+	order.PaymentID = *referenceID
 
-	if err := models.UpdateOrderSingle(int(orderID), "payment_id", &businessID); err != nil {
+	for _, passenger := range order.Passengers {
+		if err := models.UpdateSeatIsBooking(int(passenger.SeatID), true); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"status":     "internal server error",
+				"statusCode": fiber.StatusInternalServerError,
+				"message":    err.Error(),
+			})
+		}
+	}
+
+	ticket.Stock -= len(order.Passengers)
+	if err := models.UpdateTicketSingle(int(ticket.ID), "stock", ticket.Stock); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":     "internal server error",
+			"statusCode": fiber.StatusInternalServerError,
+			"message":    err.Error(),
+		})
+	}
+
+	err = models.CreateOrder(&order)
+	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status":     "internal server error",
 			"statusCode": fiber.StatusInternalServerError,
@@ -332,7 +345,7 @@ func HandlePaymentMethodCallback(c *fiber.Ctx) error {
 		})
 	}
 
-	order := models.SelectOrderSingle("payment_id", paymentMethod.BusinessId)
+	order := models.SelectOrderSingle("payment_id", data.ReferenceId)
 	if order.ID == 0 {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"status":     "not found",
@@ -470,7 +483,7 @@ func HandlePaymentRequestCallback(c *fiber.Ctx) error {
 		})
 	}
 
-	order := models.SelectOrderSingle("payment_id", payment.BusinessId)
+	order := models.SelectOrderSingle("external_id", data.ReferenceId)
 	if order.ID == 0 {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"status":     "not found",

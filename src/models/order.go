@@ -58,9 +58,9 @@ type Passenger struct {
 	Nationality string `json:"nationality" validate:"required,max=50"`
 }
 
-func CreateOrder(order *Order) (uint, error) {
+func CreateOrder(order *Order) error {
 	result := configs.DB.Create(&order)
-	return order.ID, result.Error
+	return result.Error
 }
 
 func SelectAllOrders() []*Order {
