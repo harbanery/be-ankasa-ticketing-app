@@ -14,6 +14,7 @@ type Merchant struct {
 	Image       string  `json:"image" validate:"required"`
 	Description string  `json:"description" validate:"required"`
 	Classes     []Class `json:"classes"`
+	TicketID    uint    `json:"ticket_id"`
 }
 
 type Class struct {
@@ -28,6 +29,7 @@ type Class struct {
 	IsLuggage      bool    `json:"is_luggage"`
 	IsInflightMeal bool    `json:"is_inflight_meal"`
 	IsWifi         bool    `json:"is_wifi"`
+	TicketID    uint    `json:"ticket_id"`
 }
 
 func CreateMerchant(merchant *Merchant) (uint, error) {

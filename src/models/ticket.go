@@ -2,6 +2,7 @@ package models
 
 import (
 	"ankasa-be/src/configs"
+	"log"
 	"time"
 
 	"gorm.io/gorm"
@@ -19,7 +20,6 @@ type Ticket struct {
 	Seats      []Seat    `json:"seats"`
 	Arrival    Arrival   `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"arrival"`
 	Departure  Departure `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"departure"`
-	// Transit        Transit    `json:"transit"`
 }
 
 type Arrival struct {
@@ -106,3 +106,92 @@ func DeleteTicketById(id int) (int, error) {
 	}
 	return int(result.RowsAffected), nil
 }
+
+// func SelectAllTicketWithFilter(sort string, limit, offset int, filter map[string]interface{}, condition string) []*Ticket {
+// 	var ticket []*Ticket
+
+// 	query := configs.DB.Preload("Merchant").Preload("Class").
+// 		Preload("Arrival", func(db *gorm.DB) *gorm.DB {
+// 			return db.Preload("City", func(db *gorm.DB) *gorm.DB {
+// 				return db.Preload("Country")
+// 			})
+// 		}).Preload("Departure", func(db *gorm.DB) *gorm.DB {
+// 		return db.Preload("City", func(db *gorm.DB) *gorm.DB {
+// 			return db.Preload("Country")
+// 		})
+// 	}).Group("ticket.id").Order(sort).Limit(limit).Offset(offset)
+
+// 	if merchant, ok := filter["merchatValues"].([]string); ok && len(merchant) > 0 {
+// 		query = query.Joins("INNER JOIN merchant ON merchant.ticket_id = ticket.id AND merchant.value IN ?", filter["merchantValues"])
+// 	}
+
+// 	if arrival, ok := filter["arrivalValues"].([]string); ok && len(arrival) > 0 {
+// 		query = query.Joins("INNER JOIN arrival ON arrival.ticket_id = ticket.id AND arrival.value IN ?", filter["arrivalValues"])
+// 	}
+
+// 	if departure, ok := filter["departureValues"].([]string); ok && len(departure) > 0 {
+// 		query = query.Joins("INNER JOIN departure ON departure.ticket_id = ticket.id AND departure.value IN ?", filter["departureValues"])
+// 	}
+
+// 	if class, ok := filter["classValues"].([]string); ok && len(class) > 0 {
+// 		query = query.Joins("INNER JOIN class ON class.ticket_id = ticket.id AND class.value IN ?", filter["classValues"])
+// 	}
+
+// 	if condition != "" {
+// 		query = query.Where("ticket.condition = ?", condition)
+// 	}
+
+// 	query.Find(&ticket)
+
+// 	return ticket
+// }
+func SelectAllTicketWithFilter(sort string, limit, offset int, filter map[string]interface{}, condition string) []*Ticket {
+    var ticket []*Ticket
+
+    // Secara eksplisit tentukan tabel tickets
+    query := configs.DB.Table("tickets").Preload("Merchant").Preload("Class").
+        Preload("Arrival", func(db *gorm.DB) *gorm.DB {
+            return db.Preload("City", func(db *gorm.DB) *gorm.DB {
+                return db.Preload("Country")
+            })
+        }).Preload("Departure", func(db *gorm.DB) *gorm.DB {
+        return db.Preload("City", func(db *gorm.DB) *gorm.DB {
+            return db.Preload("Country")
+        })
+    }).Group("tickets.id").Order(sort).Limit(limit).Offset(offset)
+
+    // Filter merchant
+    if merchant, ok := filter["merchantValues"].([]string); ok && len(merchant) > 0 {
+        query = query.Joins("JOIN merchants ON merchants.id = tickets.merchant_id AND merchants.name IN ?", merchant)
+    }
+
+    // Filter arrival
+    if arrival, ok := filter["arrivalValues"].([]time.Time); ok && len(arrival) > 0 {
+        query = query.Joins("JOIN arrivals ON arrivals.ticket_id = tickets.id AND arrivals.schedule IN ?", arrival)
+    }
+
+    // Filter departure
+    if departure, ok := filter["departureValues"].([]time.Time); ok && len(departure) > 0 {
+        query = query.Joins("JOIN departures ON departures.ticket_id = tickets.id AND departures.schedule IN ?", departure)
+    }
+
+    // Filter class
+    if class, ok := filter["classValues"].([]string); ok && len(class) > 0 {
+        query = query.Joins("JOIN classes ON classes.id = tickets.class_id AND classes.name IN ?", class)
+    }
+
+    // Filter condition
+    if condition != "" {
+        query = query.Where("tickets.condition = ?", condition)
+    }
+
+    // Eksekusi query
+    result := query.Find(&ticket)
+    if result.Error != nil {
+        log.Printf("Error fetching tickets: %v", result.Error)
+    }
+
+    return ticket
+}
+
+
