@@ -34,6 +34,12 @@ func GetWalletById(id int) *Wallet {
 	return wallet
 }
 
+func GetWalletByCustomerId(customer_id int) *Wallet {
+	var wallet *Wallet
+	configs.DB.Preload("Customer").First(&wallet, "customer_id = ?", customer_id)
+	return wallet
+}
+
 func CreateWallet(wallet *Wallet) error {
 	result := configs.DB.Create(&wallet)
 	return result.Error
@@ -41,6 +47,11 @@ func CreateWallet(wallet *Wallet) error {
 
 func UpdateWallet(id int, newWalet *Wallet) error {
 	result := configs.DB.Model(&Wallet{}).Where("id = ?", id).Updates(&newWalet)
+	return result.Error
+}
+
+func UpdateWalletSaldo(id int, saldo float64) error {
+	result := configs.DB.Model(&Ticket{}).Where("id = ?", id).Update("saldo", saldo)
 	return result.Error
 }
 

@@ -99,6 +99,11 @@ func UpdateTicketById(id int, updatedTicket Ticket) (int, error) {
 	return int(result.RowsAffected), nil
 }
 
+func UpdateTicketSingle(id int, name string, value interface{}) error {
+	result := configs.DB.Model(&Ticket{}).Where("id = ?", id).Update(name, value)
+	return result.Error
+}
+
 func DeleteTicketById(id int) (int, error) {
 	result := configs.DB.Delete(&Ticket{}, "id = ?", id)
 	if result.Error != nil {
