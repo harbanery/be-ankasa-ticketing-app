@@ -43,7 +43,7 @@ func GetFilterParams(c *fiber.Ctx) (map[string]interface{}, error)  {
 
 	merchant := params["merchant"]
 	if len(merchant) > 0 {
-        filter["merchantValues"] = merchant
+        filter["merchantValues"] = strings.Split(merchant, ",")
     }
 
 	class := params["class"]
