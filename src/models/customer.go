@@ -18,6 +18,15 @@ type Customer struct {
 	PostalCode  string      `json:"postal_code" validate:"required,numeric,max=5"`
 	Wallet      []APIWallet `json:"wallet"`
 }
+type ProfileCustomer struct {
+	Email       string `json:"email"`
+	City        string `json:"city" `
+	Image       string `json:"image"`
+	Address     string `json:"address"`
+	PostalCode  string `json:"postal_code" validate:"max=5"`
+	Username    string `json:"username" validate:"max=50"`
+	PhoneNumber string `json:"phone_number" validate:"max=15"`
+}
 
 // Buat testing aja
 func SelectCustomers() []*Customer {
@@ -28,9 +37,8 @@ func SelectCustomers() []*Customer {
 	}).Find(&customer)
 	return customer
 }
-// 
 
-
+//
 
 func CreateCustomer(customer *Customer) error {
 	result := configs.DB.Create(&customer)

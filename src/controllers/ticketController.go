@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"ankasa-be/src/helpers"
 	"ankasa-be/src/models"
 	"fmt"
 	"strconv"
@@ -9,7 +10,21 @@ import (
 )
 
 func GetAllTickets(c *fiber.Ctx) error {
-	tickets := models.SelectAllTickets()
+	params := c.Queries()
+	condition := params["condition"]
+	sort := helpers.GetSortParams(params["sorting"], params["orderBy"])
+	page, limit, offset := helpers.GetPaginationParams(params["limit"], params["page"])
+	filter, err := helpers.GetFilterParams(c)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"status":     "Status Bad Request",
+			"statusCode": fiber.StatusBadRequest,
+			"error":      err.Error(),
+		})
+	}
+
+	tickets := models.SelectAllTicketWithFilter(sort, limit, offset, filter, condition)
+	// tickets := models.SelectAllTickets()
 
 	if len(tickets) == 0 {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
@@ -26,6 +41,7 @@ func GetAllTickets(c *fiber.Ctx) error {
 			"created_at":             ticket.CreatedAt,
 			"updated_at":             ticket.UpdatedAt,
 			"merchant_name":          ticket.Merchant.Name,
+			"class_name":             ticket.Class.Name,
 			"merchant_image":         ticket.Merchant.Image,
 			"departure_schedule":     ticket.Departure.Schedule,
 			"departure_country_code": ticket.Departure.City.Country.Code,
@@ -41,9 +57,11 @@ func GetAllTickets(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"status":     "success",
-		"statusCode": fiber.StatusOK,
-		"data":       resultTickets,
+		"status":      "success",
+		"statusCode":  fiber.StatusOK,
+		"data":        resultTickets,
+		"currentPage": page,
+		"limit":       limit,
 	})
 }
 
